@@ -1,0 +1,812 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>AI Planning with Graphplan in Python</title>
+<meta name="author" content="(Alex Kehayias)"/>
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"/>
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/sky.css" id="theme"/>
+<link rel="stylesheet" href=""/>
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'http://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+<meta name="description" content="Graphplan in Python"/><link href="https://fonts.googleapis.com/css?family=Cabin" rel="stylesheet" type="text/css"><link type="text/css" rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide">
+<h1>AI Planning with Graphplan in Python</h1>
+<h2>Alex Kehayias</h2>
+<h2><a href="mailto:"></a></h2>
+<h2></h2>
+</section>
+<section>
+<section id="slide-orgheadline1">
+<h2 id="orgheadline1">Automated planning and scheduling</h2>
+<p>
+A branch of artificial intelligence that concerns the realization of strategies or action sequences, typically for execution by intelligent agents, autonomous robots and unmanned vehicles
+(via Wikipedia)
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline4">
+<h2 id="orgheadline4">Planning vs Scheduling</h2>
+<div class="outline-text-2" id="text-orgheadline4">
+</div></section>
+</section>
+<section>
+<section id="slide-orgheadline2">
+<h3 id="orgheadline2">Scheduling</h3>
+<ul>
+<li>Tasks are fixed just have to find ordering</li>
+<li>When and who</li>
+<li>Example: Schedule shifts at a store for employees</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline3">
+<h3 id="orgheadline3">Planning</h3>
+<p>
+Find the steps AND schedule
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline6">
+<h2 id="orgheadline6">Example: Get stuff done</h2>
+<ul>
+<li>Coding gets things done (sometimes!)</li>
+<li>I need to be caffeinated in a quiet place so I can code</li>
+<li>Walking the puppy makes her quiet (sleepy!)</li>
+<li>Brewing makes coffee, coffee can be consumed</li>
+<li>When I get up the puppy is awake (noisy!), there's no coffee (blurgh!), and I'm not dressed</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline5">
+<h3 id="orgheadline5">Computer, what's the plan for getting things done?</h3>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline7">
+<h2 id="orgheadline7">Graphplan</h2>
+<ul>
+<li>General purpose propositional planning algorithm</li>
+<li>Achieves speed by reducing the search space and learning</li>
+<li>Guarantees shortest possible plan or there is no valid plan</li>
+<li>Finds ordering independence for potentially parallel actions</li>
+<li>Declarative</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline8">
+<h2 id="orgheadline8">Implementing Graphplan in Python</h2>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline9">
+<h2 id="orgheadline9">Propositions</h2>
+<p>
+Possible states i.e Dressed, Caffeinated
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline10">
+<h2 id="orgheadline10">Propositions</h2>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">class</span> <span style="color: #66D9EF; font-weight: bold;">BaseProposition</span>(<span style="color: #A6E22E;">object</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">__cache__</span> = {}
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">__negation_of__</span> = <span style="color: #AE81FF;">None</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">score</span> = 0
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__repr__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__class__.<span style="color: #A6E22E;">__name__</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__hash__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #A6E22E;">hash</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>.__class__.<span style="color: #A6E22E;">__name__</span>)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__eq__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, other):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__hash__() == other.__hash__()
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__ne__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, other):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> (<span style="color: #66D9EF; font-weight: bold;">not</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__eq__(other))
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">negate</span>(cls):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Return a new class that represents the negation of the class such</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   that MyProposition.negate() == MyProposition.negate()</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">If the class is already a negation of another class, return</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">the negated class</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> cls.__negation_of__:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> cls.__negation_of__
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">name</span> = <span style="color: #E6DB74;">'Not'</span> + cls.<span style="color: #A6E22E;">__name__</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Early return if we have cached this negation class before</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> cls.__cache__.get(name):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> cls.__cache__[name]
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Create a new class from the old class that is the inverse of</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">the class</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">klass</span> = <span style="color: #A6E22E;">type</span>(name, (cls,), {})
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">klass.__negation_of__</span> = cls
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Add it to the class cache for next time</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">cls.__cache__</span>[name] = klass
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> klass
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_negation</span>(cls, proposition):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''Return True if proposition is a negation of self'''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_inconsistent_support</span>(cls,
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   action_layer,
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   action_mutexes,
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   proposition):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Returns True if all actions to achieve the propositions at the previous</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   level are pairwise mutexes.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline11">
+<h2 id="orgheadline11">Actions</h2>
+<ul>
+<li>Assert preconditions</li>
+<li>Return postconditions (effects)</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline12">
+<h2 id="orgheadline12">No Op Actions</h2>
+<ul>
+<li>An action that maintains a proposition (maintenance action)</li>
+<li>precondition == postcondition</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline13">
+<h2 id="orgheadline13">Actions</h2>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">class</span> <span style="color: #66D9EF; font-weight: bold;">BaseAction</span>(<span style="color: #A6E22E;">object</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Describes whether or not this action does anything</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">(preconditions != postconditions)</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">is_noop</span> = <span style="color: #AE81FF;">False</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__repr__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__class__.<span style="color: #A6E22E;">__name__</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__hash__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #A6E22E;">hash</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>.__class__.<span style="color: #A6E22E;">__name__</span>)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__eq__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, other):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__hash__() == other().__hash__()
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__ne__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, other):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> (<span style="color: #66D9EF; font-weight: bold;">not</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__eq__(other))
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_inconsistent</span>(cls, action):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Compare self to another action to check for inconsistent mutex</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   i.e effect of this action is a negation of the post conditions</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   of the other action</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_interfering</span>(cls, action):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Compare self to another action to check for interference mutex</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   i.e one action deletes the proposition of the other</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_competing</span>(cls, action):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Compare self to another action to check for competing needs mutex</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   i.e the actions have propositions that are mutex with</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   propositions from the proposition layer</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline18">
+<h2 id="orgheadline18">Planning graph</h2>
+
+<div class="figure">
+<p><img src="./planning-graph-full.png" alt="planning-graph-full.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline14">
+<h3 id="orgheadline14">Proposition Layers and Action Layers</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-swimlanes.png" alt="planning-graph-swimlanes.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline15">
+<h3 id="orgheadline15">Preconditions and Effects</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-swimlanes-with-paths.png" alt="planning-graph-swimlanes-with-paths.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline16">
+<h3 id="orgheadline16">Proposition Layer</h3>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">class</span> <span style="color: #66D9EF; font-weight: bold;">BasePropositionLayer</span>(<span style="color: #A6E22E;">object</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__repr__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__class__.<span style="color: #A6E22E;">__name__</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__init__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, propositions, action_layer=<span style="color: #AE81FF;">None</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Proposition layer can optionally be initialized with an action layer</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   that generated it. This is needed to get the mutexes of this layer.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.propositions = propositions
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.action_layer = action_layer
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@property</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">mutexes</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline17">
+<h3 id="orgheadline17">Action Layer</h3>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">class</span> <span style="color: #66D9EF; font-weight: bold;">BaseActionLayer</span>(<span style="color: #A6E22E;">object</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">__cache__</span> = {}
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">proposition_layer</span> = <span style="color: #AE81FF;">None</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">preconditions</span> = <span style="color: #AE81FF;">None</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__repr__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.__class__.<span style="color: #A6E22E;">__name__</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__init__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, proposition_layer):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Reference to the previous proposition layer</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.proposition_layer = proposition_layer
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.preconditions = proposition_layer.propositions
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">create_maintenance_action</span>(cls, action_class, proposition):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Return a new action that represents a maintenance action for</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   maintaining the proposition.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">name</span> = proposition.<span style="color: #A6E22E;">__name__</span> + <span style="color: #E6DB74;">'NoOp'</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Check if we already have this class in the cache</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> cls.__cache__.get(name):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> cls.__cache__[name]
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">klass</span> = <span style="color: #A6E22E;">type</span>(name, (action_class,), {<span style="color: #E6DB74;">'__cache__'</span>: cls.__cache__})
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">klass.preconditions</span> = [proposition]
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">klass.postconditions</span> = [proposition]
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">klass.is_noop</span> = <span style="color: #AE81FF;">True</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Store it in the class cache</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">cls.__cache__</span>[name] = klass
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> klass
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@property</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">maintenance_actions</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''Returns a list of maintenance action classes'''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">for</span> p <span style="color: #66D9EF; font-weight: bold;">in</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.preconditions:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #FFFFFF; background-color: #333333; font-weight: bold;">HACK</span><span style="color: #465457; font-style: italic;"> hardcoding the action class to use, but if the user</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">wants to extend the system they will want to override</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">which action class to use</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">yield</span> <span style="color: #66D9EF; font-weight: bold;">self</span>.create_maintenance_action(BaseAction, p)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@property</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">actions</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Returns a list of all the actions that can be taken based on</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   the proposition layer propositions.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">raise</span> <span style="color: #66D9EF; font-weight: bold;">NotImplementedError</span>(<span style="color: #E6DB74;">'Must implement the actions method'</span>)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@property</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">actions_and_maintenance_actions</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@property</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">effects</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Returns a set of all postconditions for any possible action at</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   this layer.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">conditions</span> = (i.postconditions <span style="color: #66D9EF; font-weight: bold;">for</span> i <span style="color: #66D9EF; font-weight: bold;">in</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span> <span style="color: #66D9EF; font-weight: bold;">self</span>.actions_and_maintenance_actions)
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #A6E22E;">set</span>(chain(*conditions))
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">@property</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">mutexes</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Return a collection of mutually exclusive action pairs. Actions are</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   mutually exclusive if:</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   - Inconsistent effects: effect of one action is negation of effect</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;"> of another</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   - Interference: one action deletes the propositions of the other</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   - Competing needs: the actions have propositions that are mutex</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;"> at level i-1</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   ...
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline23">
+<h2 id="orgheadline23">Generating the graph</h2>
+<div class="outline-text-2" id="text-orgheadline23">
+</div></section>
+</section>
+<section>
+<section id="slide-orgheadline19">
+<h3 id="orgheadline19">Initializing the graph</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-initial.png" alt="planning-graph-initial.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline20">
+<h3 id="orgheadline20">Initializing the graph</h3>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">class</span> <span style="color: #66D9EF; font-weight: bold;">BaseGraphPlan</span>(<span style="color: #A6E22E;">object</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">proposition_layer_class</span> = <span style="color: #AE81FF;">None</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">action_layer_class</span> = <span style="color: #AE81FF;">None</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">__init__</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>, init_propositions, goal_propositions):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Set all the goal conditions</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.goals = goal_propositions
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Generate the initial proposition layer and action layer</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">base_prop_layer</span> = <span style="color: #66D9EF; font-weight: bold;">self</span>.proposition_layer_class(init_propositions)
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_proposition_layer = base_prop_layer
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">base_action_layer</span> = <span style="color: #66D9EF; font-weight: bold;">self</span>.action_layer_class(base_prop_layer)
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_action_layer = base_action_layer
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Set up the graph state represented by a list of</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">proposition/action layer instances</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.layers = [base_prop_layer, base_action_layer]
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #465457; font-style: italic;"># </span><span style="color: #465457; font-style: italic;">Tick to the next proposition layer so we can check for solutions</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>._next_proposition_layer()
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">_next_proposition_layer</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Create a new proposition layer instance based on the</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   effects of the previous action layer. Updates the</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   last_proposition_layer property and appends the new layer to layers.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   </span><span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">layer</span> = <span style="color: #66D9EF; font-weight: bold;">self</span>.proposition_layer_class(
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_action_layer.effects,
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   action_layer=<span style="color: #66D9EF; font-weight: bold;">self</span>.last_action_layer
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   )
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_proposition_layer = layer
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.layers.append(layer)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> layer
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline21">
+<h3 id="orgheadline21">Expand the graph</h3>
+<p>
+Add another action layer and proposition layer
+<img src="./planning-graph-expanded.png" alt="planning-graph-expanded.png" />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline22">
+<h3 id="orgheadline22">Expand the graph</h3>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">_next_action_layer</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Create a new action layer instance based on the previous</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   proposition layer. Updates the last_action_layer property and</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   appends the new layer to layers.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">layer</span> = <span style="color: #66D9EF; font-weight: bold;">self</span>.action_layer_class(
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_proposition_layer
+<span style="color: #455354; background-color: #232526;"> </span>   )
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_action_layer = layer
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.layers.append(layer)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> layer
+
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">_next_proposition_layer</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Create a new proposition layer instance based on the</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   effects of the previous action layer. Updates the</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   last_proposition_layer property and appends the new layer to layers.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">layer</span> = <span style="color: #66D9EF; font-weight: bold;">self</span>.proposition_layer_class(
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_action_layer.effects,
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   action_layer=<span style="color: #66D9EF; font-weight: bold;">self</span>.last_action_layer
+<span style="color: #455354; background-color: #232526;"> </span>   )
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.last_proposition_layer = layer
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>.layers.append(layer)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> layer
+
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">expand</span>(<span style="color: #66D9EF; font-weight: bold;">self</span>):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   Expand the plan graph to another action and proposition layer.</span>
+<span style="color: #455354; background-color: #232526;"> </span><span style="color: #E6DB74;">   '''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   LOGGER.info(<span style="color: #E6DB74;">"Expanding planning graph"</span>)
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>._next_action_layer()
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">self</span>._next_proposition_layer()
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline35">
+<h2 id="orgheadline35">Finding mutexes</h2>
+<p>
+Allows us to prune the actions that will be considered when searching for a solution
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline30">
+<h3 id="orgheadline30">Action mutexes</h3>
+<ul>
+<li>Competing needs</li>
+<li>Inconsistent effects</li>
+<li>Interference</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline24">
+<h4 id="orgheadline24">Competing Needs</h4>
+<p>
+The actions have propositions that are mutex with propositions from the previous proposition layer
+<img src="./action-mutexes-competing-needs.png" alt="action-mutexes-competing-needs.png" />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline25">
+<h4 id="orgheadline25">Competing Needs</h4>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_competing</span>(cls, action):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">for</span> p <span style="color: #66D9EF; font-weight: bold;">in</span> cls.preconditions:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> p.negate() <span style="color: #66D9EF; font-weight: bold;">in</span> action.preconditions:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">True</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">False</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline26">
+<h4 id="orgheadline26">Inconsistent Effects</h4>
+<p>
+Effect of an action is a negation of the effects of the other action
+<img src="./action-mutexes-inconsistent-effects.png" alt="action-mutexes-inconsistent-effects.png" />
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline27">
+<h4 id="orgheadline27">Inconsistent Effects</h4>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_inconsistent</span>(cls, action):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">for</span> p1, p2 <span style="color: #66D9EF; font-weight: bold;">in</span> product(cls.postconditions, action.postconditions):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> p1.is_negation(p2):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">True</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">False</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline28">
+<h4 id="orgheadline28">Interference</h4>
+<p>
+An action deletes the precondition of the other action i.e Taking out the garbage and cooking
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline29">
+<h4 id="orgheadline29">Interference</h4>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_interfering</span>(cls, action):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">for</span> p <span style="color: #66D9EF; font-weight: bold;">in</span> cls.postconditions:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> p.negate() <span style="color: #66D9EF; font-weight: bold;">in</span> action.preconditions:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">True</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">False</span>
+</pre>
+</div>
+
+</section>
+</section>
+<section>
+<section id="slide-orgheadline34">
+<h3 id="orgheadline34">Proposition mutexes</h3>
+<ul>
+<li>Negation</li>
+<li>Inconsistent support</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline31">
+<h4 id="orgheadline31">Negation</h4>
+<p>
+The proposition is a negation of the other proposition. i.e Dressed, Not Dressed
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_negation</span>(cls, proposition):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #E6DB74;">'''Return True if proposition is a negation of self'''</span>
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> cls.negate() == proposition
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline32">
+<h4 id="orgheadline32">Inconsistent support</h4>
+<p>
+All actions to achieve the propositions at the previous level are pairwise mutexes
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline33">
+<h4 id="orgheadline33">Inconsistent support</h4>
+<div class="org-src-container">
+
+<pre  class="src src-python"><span style="color: #66D9EF; font-weight: bold;">@classmethod</span>
+<span style="color: #66D9EF; font-weight: bold;">def</span> <span style="color: #F92672; font-style: italic;">is_inconsistent_support</span>(cls, action_layer, action_mutexes, proposition):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">p1_actions</span> = action_layer.actions_by_postcondition(cls)
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #F92672;">p2_actions</span> = action_layer.actions_by_postcondition(proposition)
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">for</span> pair <span style="color: #66D9EF; font-weight: bold;">in</span> product(p1_actions, p2_actions):
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">if</span> <span style="color: #A6E22E;">frozenset</span>(pair) <span style="color: #66D9EF; font-weight: bold;">not</span> <span style="color: #66D9EF; font-weight: bold;">in</span> action_mutexes:
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">False</span>
+
+<span style="color: #455354; background-color: #232526;"> </span>   <span style="color: #66D9EF; font-weight: bold;">return</span> <span style="color: #AE81FF;">True</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline43">
+<h2 id="orgheadline43">Searching for valid plans</h2>
+<ul>
+<li>Are all the goal conditions present in the last proposition layer?</li>
+<li>Are any of the goal conditions mutex?</li>
+<li>If no to either, expand the graph</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline36">
+<h3 id="orgheadline36">Searching for valid plans</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-solution-search-step-1.png" alt="planning-graph-solution-search-step-1.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline37">
+<h3 id="orgheadline37">Searching for valid plans</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-solution-search-step-2.png" alt="planning-graph-solution-search-step-2.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline38">
+<h3 id="orgheadline38">Searching for valid plans</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-solution-search-step-3.png" alt="planning-graph-solution-search-step-3.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline39">
+<h3 id="orgheadline39">Searching for valid plans</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-solution-search-step-4.png" alt="planning-graph-solution-search-step-4.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline40">
+<h3 id="orgheadline40">Searching for valid plans</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-solution-search-step-5.png" alt="planning-graph-solution-search-step-5.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline41">
+<h3 id="orgheadline41">Searching for valid plans</h3>
+
+<div class="figure">
+<p><img src="./planning-graph-solution.png" alt="planning-graph-solution.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline42">
+<h3 id="orgheadline42">Extensions</h3>
+<ul>
+<li>Distance based goal ordering</li>
+<li>Jump back search</li>
+<li>Persisting failures</li>
+<li>Forward search</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline44">
+<h2 id="orgheadline44">A word about heuristics</h2>
+<ul>
+<li>General planners are general</li>
+<li>Study your problem domain</li>
+<li>Infuse business logic into custom solvers</li>
+<li>Break apart the problem into smaller graphs</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline45">
+<h2 id="orgheadline45">Thank you!</h2>
+<p>
+Get in touch!
+</p>
+<ul>
+<li>Twitter: @alexkehayias</li>
+<li>GitHub: <a href="https://github.com/alexkehayias">https://github.com/alexkehayias</a></li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline46">
+<h2 id="orgheadline46">Resources</h2>
+<ul>
+<li>Paper introducing Graphplan: <a href="http://www.cs.ucf.edu/~gitars/cap6671/Papers/graphplan.pdf">http://www.cs.ucf.edu/~gitars/cap6671/Papers/graphplan.pdf</a></li>
+<li>MIT lecture slides on GraphPlan <a href="http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-825-techniques-in-artificial-intelligence-sma-5504-fall-2002/lecture-notes/Lecture12FinalPart1.pdf">http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-825-techniques-in-artificial-intelligence-sma-5504-fall-2002/lecture-notes/Lecture12FinalPart1.pdf</a></li>
+<li>Distance based goal ordering <a href="https://www.aaai.org/Papers/AIPS/2000/AIPS00-034.pdf">https://www.aaai.org/Papers/AIPS/2000/AIPS00-034.pdf</a></li>
+<li>Dependency directed back tracking and more <a href="https://arxiv.org/pdf/1106.0230.pdf">https://arxiv.org/pdf/1106.0230.pdf</a></li>
+
+</ul>
+</section>
+</section>
+</div>
+</div>
+<p>Created by Alex Kehayias</p>
+<script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+<script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: true,
+center: true,
+slideNumber: true,
+rollingLinks: false,
+keyboard: true,
+overview: true,
+width: 1140,
+height: 900,
+margin: 0.10,
+minScale: 1.00,
+maxScale: 2.50,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'none', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+});
+</script>
+</body>
+</html>
